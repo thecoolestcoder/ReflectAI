@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { askAI } from "../services/ai"; // Ensure this path matches where you created the service file
 import "../styles/ChatbotTab.css";
 
 export default function ChatbotTab({ notes }) {
@@ -7,7 +8,7 @@ export default function ChatbotTab({ notes }) {
       id: 1,
       type: "bot",
       content:
-        "Hello! I'm your AI assistant. I can help you analyze your notes, answer questions, and provide insights. How can I help you today?",
+        "Hello! I'm your AI assistant powered by Gemini. I can read your notes to answer questions, summarize content, or find connections. How can I help you today?",
       timestamp: new Date(),
     },
   ]);
@@ -23,120 +24,11 @@ export default function ChatbotTab({ notes }) {
     scrollToBottom();
   }, [messages]);
 
-  const generateBotResponse = (userMessage) => {
-    const message = userMessage.toLowerCase();
-    const noteCount = notes.length;
-    const totalWords = notes.reduce(
-      (sum, note) => sum + note.content.split(" ").length,
-      0
-    );
-    const allTags = [...new Set(notes.flatMap((note) => note.tags))];
-
-    // Simple keyword-based responses
-    if (
-      message.includes("how many") ||
-      message.includes("total") ||
-      message.includes("count")
-    ) {
-      if (message.includes("note")) {
-        return `You have created ${noteCount} note${noteCount !== 1 ? "s" : ""} so far.`;
-      }
-      if (message.includes("tag") || message.includes("category")) {
-        return `You're using ${allTags.length} different tag${allTags.length !== 1 ? "s" : ""}: ${allTags.join(", ") || "none yet"}`;
-      }
-      if (message.includes("word")) {
-        return `Your notes contain approximately ${totalWords} words in total.`;
-      }
-    }
-
-    if (
-      message.includes("summarize") ||
-      message.includes("summary") ||
-      message.includes("overview")
-    ) {
-      if (noteCount === 0) {
-        return "You haven't created any notes yet. Start by creating your first note!";
-      }
-      return `You have ${noteCount} notes with ${allTags.length} tags. Your notes contain about ${totalWords} words. Keep adding more to build a comprehensive knowledge base!`;
-    }
-
-    if (
-      message.includes("recent") ||
-      message.includes("latest") ||
-      message.includes("newest")
-    ) {
-      if (noteCount === 0) {
-        return "You don't have any notes yet.";
-      }
-      const recentNote = notes[notes.length - 1];
-      return `Your most recent note is "${recentNote.title}" created on ${new Date(recentNote.created_at).toLocaleDateString()}.`;
-    }
-
-    if (
-      message.includes("help") ||
-      message.includes("what can") ||
-      message.includes("how do")
-    ) {
-      return "I can help you with:\n• Summarizing your notes\n• Analyzing note statistics\n• Finding specific notes\n• Providing writing suggestions\n• Organizing by tags\n\nJust ask me anything about your notes!";
-    }
-
-    if (
-      message.includes("recommend") ||
-      message.includes("suggest") ||
-      message.includes("advice")
-    ) {
-      if (noteCount < 5) {
-        return "I recommend starting to organize your notes with consistent tags. This will help you find and categorize information more easily!";
-      }
-      if (allTags.length < 3) {
-        return "Consider using more diverse tags to better organize your notes across different categories.";
-      }
-      return "Great job organizing your notes! Keep writing and adding to your knowledge base.";
-    }
-
-    if (message.includes("tag") || message.includes("categor")) {
-      if (allTags.length === 0) {
-        return "You haven't used any tags yet. Tags help organize your notes by category!";
-      }
-      return `Your tags: ${allTags.join(", ")}. These help you organize and find notes quickly.`;
-    }
-
-    if (message.includes("search") || message.includes("find")) {
-      return "You can search your notes using the search bar in the Notes tab. It searches through titles, content, and tags!";
-    }
-
-    if (
-      message.includes("export") ||
-      message.includes("backup") ||
-      message.includes("save")
-    ) {
-      return "You can export your notes from the Notes tab. This creates a backup of all your notes in JSON format.";
-    }
-
-    if (
-      message.includes("analyze") ||
-      message.includes("link") ||
-      message.includes("url")
-    ) {
-      return "Great question! You can use the Links tab to analyze any webpage. Just paste a URL and I'll extract key information and keywords for you.";
-    }
-
-    if (
-      message.includes("hello") ||
-      message.includes("hi") ||
-      message.includes("hey")
-    ) {
-      return `Hello! 👋 I can see you have ${noteCount} notes. How can I help you today?`;
-    }
-
-    // Default response
-    return "That's an interesting question! I can help you manage and analyze your notes. Try asking me about your notes, statistics, tags, or how to use the app.";
-  };
-
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
+    // 1. Create User Message Object
     const userMessage = {
       id: Date.now(),
       type: "user",
@@ -144,21 +36,38 @@ export default function ChatbotTab({ notes }) {
       timestamp: new Date(),
     };
 
+    // 2. Update State and Clear Input
     setMessages((prev) => [...prev, userMessage]);
     setInputValue("");
     setLoading(true);
 
-    // Simulate bot thinking time
-    setTimeout(() => {
+    try {
+      // 3. Call the Gemini Service
+      // We pass the user's question AND the full notes array
+      const aiResponseText = await askAI(inputValue, notes);
+
+      // 4. Create Bot Response Object
       const botResponse = {
         id: Date.now() + 1,
         type: "bot",
-        content: generateBotResponse(inputValue),
+        content: aiResponseText,
         timestamp: new Date(),
       };
+
       setMessages((prev) => [...prev, botResponse]);
+    } catch (error) {
+      console.error("Chat Error:", error);
+      const errorResponse = {
+        id: Date.now() + 1,
+        type: "bot",
+        content:
+          "I'm having trouble reaching the AI right now. Please check your internet connection.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorResponse]);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const handleClearChat = () => {
@@ -168,11 +77,19 @@ export default function ChatbotTab({ notes }) {
           id: 1,
           type: "bot",
           content:
-            "Hello! I'm your AI assistant. I can help you analyze your notes, answer questions, and provide insights. How can I help you today?",
+            "Chat history cleared. I'm ready to help you analyze your notes again!",
           timestamp: new Date(),
         },
       ]);
     }
+  };
+
+  // Helper to handle suggestion clicks
+  const handleSuggestionClick = (question) => {
+    // We set the input value, but we also want to trigger the send immediately?
+    // Usually easier to just set input and let user hit send, or call a send function manually.
+    // Here we will just set the input to let the user review it first.
+    setInputValue(question);
   };
 
   return (
@@ -188,15 +105,12 @@ export default function ChatbotTab({ notes }) {
 
         <div className="chatbot-messages">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`message message-${message.type}`}
-            >
+            <div key={message.id} className={`message message-${message.type}`}>
               <div className="message-avatar">
                 {message.type === "bot" ? "🤖" : "👤"}
               </div>
               <div className="message-content">
-                <p>{message.content}</p>
+                <p style={{ whiteSpace: "pre-wrap" }}>{message.content}</p>
                 <span className="message-time">
                   {message.timestamp.toLocaleTimeString([], {
                     hour: "2-digit",
@@ -235,7 +149,7 @@ export default function ChatbotTab({ notes }) {
               className="btn-send"
               disabled={loading || !inputValue.trim()}
             >
-              Send
+              {loading ? "..." : "Send"}
             </button>
           </div>
         </form>
@@ -245,35 +159,35 @@ export default function ChatbotTab({ notes }) {
           <div className="suggestions-grid">
             <button
               className="suggestion-btn"
-              onClick={() => {
-                setInputValue("How many notes do I have?");
-              }}
+              onClick={() =>
+                handleSuggestionClick("Summarize my recent notes about Rust")
+              }
             >
-              How many notes?
+              Summarize Rust notes
             </button>
             <button
               className="suggestion-btn"
-              onClick={() => {
-                setInputValue("What tags am I using?");
-              }}
+              onClick={() =>
+                handleSuggestionClick("What tags am I using the most?")
+              }
             >
-              My tags
+              Analyze my tags
             </button>
             <button
               className="suggestion-btn"
-              onClick={() => {
-                setInputValue("Summarize my notes");
-              }}
+              onClick={() =>
+                handleSuggestionClick("Find any contradictions in my notes")
+              }
             >
-              Summarize
+              Find contradictions
             </button>
             <button
               className="suggestion-btn"
-              onClick={() => {
-                setInputValue("What can you help me with?");
-              }}
+              onClick={() =>
+                handleSuggestionClick("Create a study guide based on my notes")
+              }
             >
-              Help
+              Create study guide
             </button>
           </div>
         </div>
