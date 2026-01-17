@@ -1,0 +1,4 @@
+search by date
+add AI powered title and tags generation(although still allowing manual editing)
+add gemini api to chatbot and tags generation
+fix links not working properly.

@@ -1,0 +1,35 @@
+# Rust
+/target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# Tauri
+/src-tauri/target/
+src-tauri/tauri.conf.json.default
+
+# Node (frontend dependencies)
+node_modules/
+dist/
+*.log
+npm-debug.log*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment
+.env
+.env.local
+
+# App data
+.reflectai/
+~/.reflectai/
+
+# OS
+.DS_Store
+Thumbs.db
