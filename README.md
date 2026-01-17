@@ -50,6 +50,11 @@ The compiled binary will be in `src-tauri/target/release/`.
 
 ## Usage
 
+### Make sure to set API key for gemini in /frontend/.env as 
+```
+VITE_GEMINI_API_KEY=urapikey
+```
+
 ### Adding Notes
 
 1. Click **"+ New"** or start typing in the title field
