@@ -70,12 +70,7 @@ function App() {
           >
             📝 Notes
           </button>
-          <button
-            className={`nav-btn ${activeTab === "links" ? "active" : ""}`}
-            onClick={() => setActiveTab("links")}
-          >
-            🔗 Links
-          </button>
+
           <button
             className={`nav-btn ${activeTab === "history" ? "active" : ""}`}
             onClick={() => setActiveTab("history")}

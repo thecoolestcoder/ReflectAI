@@ -1,35 +1,46 @@
 .chatbot-tab {
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.5s ease-out;
+    color: #ffffff;
 }
 
 .chatbot-container {
     display: flex;
     flex-direction: column;
     height: calc(100vh - 280px);
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px) saturate(180%);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     overflow: hidden;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 /* --- Header Section --- */
 .chatbot-header {
     padding: 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     color: white;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .chatbot-header h2 {
     font-size: 20px;
-    font-weight: 600;
+    font-weight: 700;
     margin: 0 0 4px 0;
+    color: #ffffff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .chatbot-header p {
     font-size: 13px;
     opacity: 0.9;
     margin: 0 0 12px 0;
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .header-actions {
@@ -41,15 +52,19 @@
     padding: 6px 12px;
     font-size: 12px;
     background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
     color: white;
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    font-weight: 600;
 }
 
 .chatbot-header button:hover {
     background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* --- Messages Area --- */
@@ -59,13 +74,34 @@
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 16px; /* Increased gap slightly for better reading */
-    background: #fafafa;
+    gap: 16px;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Custom Scrollbar */
+.chatbot-messages::-webkit-scrollbar {
+    width: 10px;
+}
+
+.chatbot-messages::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+}
+
+.chatbot-messages::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.chatbot-messages::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .message {
     display: flex;
-    align-items: flex-start; /* Changed from flex-end to align avatar at top */
+    align-items: flex-start;
     gap: 12px;
     animation: slideIn 0.3s ease;
     max-width: 100%;
@@ -82,14 +118,15 @@
 .message-avatar {
     font-size: 24px;
     flex-shrink: 0;
-    margin-top: 4px; /* Align with top of text bubbles */
+    margin-top: 4px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
 /* Wrapper for content + actions */
 .message-content-wrapper {
     display: flex;
     flex-direction: column;
-    max-width: 75%; /* Increased width for code blocks */
+    max-width: 75%;
 }
 
 .message-user .message-content-wrapper {
@@ -103,42 +140,52 @@
 /* --- Message Bubbles --- */
 .message-content {
     padding: 12px 16px;
-    border-radius: 12px;
+    border-radius: 16px;
     word-wrap: break-word;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .message-user .message-content {
-    background: #667eea;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
     color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 16px 16px 0 16px;
 }
 
 .message-bot .message-content {
-    background: white;
-    color: #333;
-    border: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
     border-radius: 16px 16px 16px 0;
 }
 
 .message-time {
     display: block;
     font-size: 11px;
-    color: #999;
+    color: rgba(255, 255, 255, 0.7);
     margin-top: 4px;
+    font-weight: 500;
 }
 
-/* --- Markdown Styling (The new formatted text) --- */
+/* --- Markdown Styling --- */
 .markdown-body {
     font-size: 14px;
     line-height: 1.6;
 }
 
-/* User bubbles need white text override for markdown elements */
 .message-user .markdown-body p,
 .message-user .markdown-body li,
 .message-user .markdown-body strong {
     color: white;
+}
+
+.message-bot .markdown-body p,
+.message-bot .markdown-body li {
+    color: #ffffff;
 }
 
 .markdown-body p {
@@ -161,40 +208,40 @@
 /* Bold text */
 .markdown-body strong {
     font-weight: 700;
-}
-.message-bot .markdown-body strong {
-    color: #2d3748; /* Darker text for emphasis on light bg */
+    color: #ffffff;
 }
 
 /* Code Blocks */
 .markdown-body pre {
-    background: #f1f5f9;
+    background: rgba(0, 0, 0, 0.3);
     padding: 12px;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow-x: auto;
     margin: 10px 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 .markdown-body code {
     font-family: "Consolas", "Monaco", monospace;
     font-size: 0.9em;
-    background: rgba(0, 0, 0, 0.06);
-    padding: 2px 4px;
-    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
 }
 .markdown-body pre code {
     background: transparent;
     padding: 0;
-    color: #333;
+    color: #ffffff;
 }
 
-/* Fix code block colors inside user bubbles */
+/* User bubble code blocks */
 .message-user .markdown-body pre {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.25);
 }
 .message-user .markdown-body code {
     background: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 .message-user .markdown-body pre code {
     background: transparent;
@@ -211,13 +258,14 @@
 }
 
 .btn-save-note {
-    background: transparent;
-    border: 1px solid #cbd5e0;
-    color: #718096;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.9);
     border-radius: 12px;
-    padding: 4px 10px;
+    padding: 6px 12px;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -226,10 +274,11 @@
 }
 
 .btn-save-note:hover {
-    background: #667eea;
-    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
     color: white;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 /* --- Typing Indicator --- */
@@ -242,9 +291,10 @@
 .typing-indicator span {
     width: 8px;
     height: 8px;
-    background: #667eea;
+    background: rgba(255, 255, 255, 0.6);
     border-radius: 50%;
     animation: typing 1.4s infinite;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
 }
 
 .typing-indicator span:nth-child(2) {
@@ -270,8 +320,10 @@
 /* --- Input Area --- */
 .chatbot-input-form {
     padding: 16px;
-    background: white;
-    border-top: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .input-container {
@@ -282,55 +334,69 @@
 .input-container input {
     flex: 1;
     padding: 12px 16px;
-    border: 2px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(255, 255, 255, 0.25);
     border-radius: 24px;
     font-size: 14px;
     font-family: inherit;
-    transition: border-color 0.2s;
+    color: #ffffff;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.input-container input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .input-container input:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15);
 }
 
 .btn-send {
     padding: 12px 24px;
-    background: #667eea;
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
     color: white;
-    border: none;
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 24px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-send:hover:not(:disabled) {
-    background: #5568d3;
+    background: rgba(255, 255, 255, 0.35);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .btn-send:disabled {
-    background: #cbd5e0;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.5);
     cursor: not-allowed;
 }
 
 /* --- Suggestions Area --- */
 .chatbot-suggestions {
     padding: 16px;
-    background: #f8f9fa;
-    border-top: 1px solid #e0e0e0;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .suggestions-label {
     font-size: 12px;
-    font-weight: 600;
-    color: #4a5568;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
     margin-bottom: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px;
 }
 
 .suggestions-grid {
@@ -341,26 +407,27 @@
 
 .suggestion-btn {
     padding: 10px 12px;
-    background: white;
-    color: #667eea;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(10px);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
     font-size: 12px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
     text-align: center;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .suggestion-btn:hover {
-    background: #ebf4ff;
-    border-color: #667eea;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
-/* --- Animations & Responsiveness --- */
+/* --- Animations --- */
 @keyframes slideIn {
     from {
         opacity: 0;
@@ -375,9 +442,11 @@
 @keyframes fadeIn {
     from {
         opacity: 0;
+        transform: translateY(15px);
     }
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 

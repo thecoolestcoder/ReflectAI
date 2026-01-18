@@ -3,22 +3,14 @@ import { invoke } from "@tauri-apps/api/core";
 import { analyzeLink } from "../services/linkAnalyzer";
 import "../styles/LinksTab.css";
 
-export default function LinksTab({ onLinkAnalyzed }) {
+export default function LinksTab({ onLinkAnalyzed, setActiveTab }) {
   const [url, setUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analyzedLinks, setAnalyzedLinks] = useState([]);
   const [error, setError] = useState("");
-  const [autoSave, setAutoSave] = useState(false);
 
-  // --- Modal State ---
-  const [showModal, setShowModal] = useState(false);
-  const [noteForm, setNoteForm] = useState({
-    title: "",
-    content: "",
-    tags: "",
-  });
+  // Session history state - kept even after redirect if component stays mounted
+  const [analyzedLinks, setAnalyzedLinks] = useState([]);
 
-  // --- Analysis Logic ---
   const handleAnalyze = async (e) => {
     e.preventDefault();
     if (!url) {
@@ -30,91 +22,59 @@ export default function LinksTab({ onLinkAnalyzed }) {
       setError("");
       setAnalyzing(true);
 
+      // 1. Analyze the Link
       const result = await analyzeLink(url);
 
+      // 2. Auto-Save to Database immediately (Default behavior)
+      await invoke("add_note", {
+        title: `Analysis: ${result.domain}`,
+        content: `Source: ${result.url}\n\n## Summary\n${result.summary}\n\n## Keywords\n${result.keywords.join(", ")}\n\n## Sentiment\n${result.sentiment || "Neutral"}`,
+        tags: [
+          "gemini-analysis",
+          result.domain,
+          ...result.keywords.slice(0, 3),
+        ],
+      });
+
+      // 3. Update Local History
       const newLink = {
         id: Date.now().toString(),
-        url: result.url,
-        domain: result.domain,
-        summary: result.summary,
-        keywords: result.keywords,
-        wordCount: result.wordCount,
-        sentiment: result.sentiment,
+        ...result,
         analyzedAt: new Date().toLocaleString(),
       };
+      setAnalyzedLinks((prev) => [newLink, ...prev]);
 
-      setAnalyzedLinks([newLink, ...analyzedLinks]);
+      // 4. Cleanup & Redirect
       setUrl("");
+      onLinkAnalyzed(); // Refresh the notes list in the sidebar/parent
 
-      // If auto-save is ON, we skip the modal and save directly
-      if (autoSave) {
-        await quickSave(newLink);
+      // Switch to Notes tab to see the result
+      if (setActiveTab) {
+        setActiveTab("notes");
       }
-
-      onLinkAnalyzed();
     } catch (err) {
-      setError(`Failed to analyze URL: ${err.message || err}`);
+      setError(`Analysis failed: ${err.message || err}`);
+      console.error(err);
     } finally {
       setAnalyzing(false);
     }
   };
 
-  // --- Quick Save (Auto-save) ---
-  const quickSave = async (link) => {
-    try {
-      await invoke("add_note", {
-        title: `Analysis: ${link.domain}`,
-        content: `Source: ${link.url}\n\n## Summary\n${link.summary}\n\n## Keywords\n${link.keywords.join(", ")}\n\n## Sentiment\n${link.sentiment || "Neutral"}`,
-        tags: ["gemini-analysis", link.domain, ...link.keywords.slice(0, 3)],
-      });
-      console.log("Auto-saved note");
-    } catch (err) {
-      console.error("Auto-save failed:", err);
-    }
-  };
-
-  // --- Manual Save (Opens Editor Modal) ---
-  const openSaveModal = (link) => {
-    setNoteForm({
-      title: `Analysis: ${link.domain}`,
-      content: `Source: ${link.url}\n\n## Summary\n${link.summary}\n\n## Keywords\n${link.keywords.join(", ")}\n\n## Sentiment\n${link.sentiment || "Neutral"}`,
-      tags: ["gemini-analysis", link.domain, ...link.keywords].join(", "),
-    });
-    setShowModal(true);
-  };
-
-  const handleFinalSave = async () => {
-    try {
-      // Convert comma-separated string back to array for tags
-      const tagArray = noteForm.tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter((t) => t.length > 0);
-
-      await invoke("add_note", {
-        title: noteForm.title,
-        content: noteForm.content,
-        tags: tagArray,
-      });
-
-      alert("Note saved successfully!");
-      setShowModal(false); // Close modal
-      onLinkAnalyzed(); // Refresh sidebar/stats
-    } catch (err) {
-      alert("Failed to save note: " + err);
-    }
-  };
-
   const handleDelete = (id) => {
-    setAnalyzedLinks(analyzedLinks.filter((link) => link.id !== id));
+    setAnalyzedLinks((prev) => prev.filter((link) => link.id !== id));
   };
 
   return (
     <div className="links-tab section">
-      {/* --- The Main Link Analyzer UI --- */}
       <div className="links-container">
+        {/* Analysis Form */}
         <div className="card form-card">
           <h3>Analyze a Link with Gemini</h3>
+          <p className="helper-text">
+            Enter a URL below. The AI will analyze it, automatically save it as
+            a note, and redirect you to the notes view.
+          </p>
+
           <form onSubmit={handleAnalyze}>
             <div className="form-group">
               <label>URL</label>
@@ -130,18 +90,6 @@ export default function LinksTab({ onLinkAnalyzed }) {
               />
             </div>
 
-            <div className="form-group checkbox-group">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={autoSave}
-                  onChange={(e) => setAutoSave(e.target.checked)}
-                  disabled={analyzing}
-                />
-                Skip editor (Auto-save immediately)
-              </label>
-            </div>
-
             {error && <div className="error-message">{error}</div>}
 
             <div className="form-actions">
@@ -150,114 +98,39 @@ export default function LinksTab({ onLinkAnalyzed }) {
                 className="btn-primary"
                 disabled={analyzing}
               >
-                {analyzing ? "Analyzing..." : "Analyze Link"}
+                {analyzing ? "Analyzing & Saving..." : "Analyze & Save"}
               </button>
             </div>
           </form>
         </div>
 
-        {/* --- List of Analyzed Links --- */}
-        <div className="links-list">
-          {analyzedLinks.map((link) => (
-            <div key={link.id} className="card link-card">
-              <div className="card-header">
-                <div className="link-header-content">
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="link-domain"
-                  >
-                    {link.domain}
-                  </a>
-                  <div className="card-meta">{link.analyzedAt}</div>
-                </div>
-                <div className="card-actions">
-                  <button
-                    className="btn-small btn-secondary"
-                    onClick={() => openSaveModal(link)}
-                    title="Review & Save as Note"
-                  >
-                    📝 Save
-                  </button>
+        {/* History List (Visible if user switches back to this tab) */}
+        {analyzedLinks.length > 0 && (
+          <div className="links-list">
+            <h3>Session History</h3>
+            {analyzedLinks.map((link) => (
+              <div key={link.id} className="card link-card">
+                <div className="card-header">
+                  <div className="link-header-content">
+                    <span className="link-domain">{link.domain}</span>
+                    <div className="card-meta">{link.analyzedAt}</div>
+                  </div>
                   <button
                     className="btn-small btn-danger"
                     onClick={() => handleDelete(link.id)}
-                    title="Delete"
+                    title="Remove from history"
                   >
-                    🗑️
+                    ✕
                   </button>
                 </div>
+                <div className="link-summary">
+                  <p>{link.summary}</p>
+                </div>
               </div>
-              <div className="link-summary">
-                <p>{link.summary}</p>
-              </div>
-              <div className="link-keywords">
-                {link.keywords.map((k, i) => (
-                  <span key={i} className="tag tag-blue">
-                    {k}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* --- EDIT MODAL (The "Editing Window") --- */}
-      {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content card">
-            <h3>Save Analysis as Note</h3>
-
-            <div className="form-group">
-              <label>Title</label>
-              <input
-                type="text"
-                value={noteForm.title}
-                onChange={(e) =>
-                  setNoteForm({ ...noteForm, title: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Content</label>
-              <textarea
-                className="note-editor-textarea"
-                rows="10"
-                value={noteForm.content}
-                onChange={(e) =>
-                  setNoteForm({ ...noteForm, content: e.target.value })
-                }
-              ></textarea>
-            </div>
-
-            <div className="form-group">
-              <label>Tags (comma separated)</label>
-              <input
-                type="text"
-                value={noteForm.tags}
-                onChange={(e) =>
-                  setNoteForm({ ...noteForm, tags: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="modal-actions">
-              <button
-                className="btn-secondary"
-                onClick={() => setShowModal(false)}
-              >
-                Cancel
-              </button>
-              <button className="btn-primary" onClick={handleFinalSave}>
-                Save Note
-              </button>
-            </div>
+            ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
